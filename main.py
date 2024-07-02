@@ -1,4 +1,3 @@
-from math import pi
 import piece
 import re
 
@@ -8,18 +7,34 @@ import re
 # GPT-4 for wrtn(주석, 최적화 담당 노예)
 
 
-def check_moves(moves: list, player_move: str, color: str):
-    match = re.match(r"([PNBRQKpnbrqk]+)?([a-hA-H]?[1-8]?)?([Xx])?([a-hA-H][1-8])(=)?([NBRQnbrq])?", player_move, re.I)
+def check_moves(moves: list[list], player_move: str) -> list | str:
+    match = re.match(r"([PNBRQKpnbrqk]+)?([a-hA-H])?([1-8])?([Xx])?([a-hA-H])([1-8])(=[NBRQnbrq]+)?", player_move, re.I)
     possible_moves = []
-
     if match:
-        part1, part2, part3, part4, part5, part6 = match.groups()
+        part1, part2, part3, part4, part5, part6, part7 = match.groups()
+        match_part1, match_part2, match_part3, match_part4, match_part5, match_part6, match_part7 = False
         if part1 is None:
-            part1 = 'p'
-        if part1.upper() == "P" and part4[-1] in ['1', '8']:
-            part5 = "="
+            part1 = 'P'
+        else:
+            part1 = part1.upper()
+        if part7:
+            part7 = part7.upper()
+        chess_to_index_map = {
+            'a': '0', 'b': '1', 'c': '2', 'd': '3',
+            'e': '4', 'f': '5', 'g': '6', 'h': '7',
+            '1': '7', '2': '6', '3': '5', '4': '4',
+            '5': '3', '6': '2', '7': '1', '8': '0'
+        }
         for cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type in moves:
-            if part2:
+            match_part1 = (part1 == piece_type)
+            match_part2 = (part2 is None or chess_to_index_map[part2] == cy)
+            match_part3 = (part3 is None or chess_to_index_map[part3] == cx)
+            match_part4 = (part4 is None or (part4 == move_type and takes_piece_type is not None))
+            match_part5 = (chess_to_index_map[part5] == dy)
+            match_part6 = (chess_to_index_map[part6] == dx)
+            match_part7 = (part7 is None or (part1 == "P" and dx in ['0', '7']))
+            if match_part1 and match_part2 and match_part3 and match_part4 and match_part5 and match_part6 and match_part7:
+                possible_moves.append([cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type])
         if possible_moves:
             return possible_moves
         else:
@@ -28,69 +43,27 @@ def check_moves(moves: list, player_move: str, color: str):
         return "Invalid input"
 
 
-
-def check_move_convert(result):
-    """
-    체스 게임에서 특정 기물의 움직임 결과를 받아서 문자열 형태로 변환하는 함수입니다.
-
-    Args:
-    result: 움직임의 결과를 나타내는 데이터. 리스트 또는 문자열 형태일 수 있습니다.
-
-    Returns:
-    str: 움직임 결과를 문자열로 변환한 값. 결과에 따라 "Duplicated", 움직임 위치, 특정 오류 메시지,
-         "Unknown result" 중 하나를 반환합니다.
-    """
-
-    # 결과값이 리스트인 경우
+def check_move_convert(result: list | str) -> list | str:
     if isinstance(result, list):
-        # 리스트에 원소가 두 개 이상 있는 경우, 중복된 움직임이 있음을 나타냅니다.
         if len(result) >= 2:
             return "Duplicated"
-        # 리스트에 원소가 하나 있는 경우, 해당 움직임을 문자열로 변환하여 반환합니다.
         elif len(result) == 1:
             return result[0]
-    # 결과값이 문자열인 경우, 특정 오류 메시지들을 그대로 반환합니다.
     elif isinstance(result, str):
-        # 알려진 오류 메시지인 경우 해당 메시지를 반환합니다.
         if result in ["No possible move", "Invalid input", "Invalid color"]:
             return result
-    # 그 외의 경우는 알 수 없는 결과로 처리합니다.
     else:
         return "Unknown result"
 
 
-def board_move(board: list, move: str, color: str):
-    # 말의 체스 보드 이동을 처리하는 함수입니다.
-
-    # 실제 체스 이동을 인덱스 기반으로 변환합니다.
-    index_move = Piece.convert_chess_move_to_index(move)
-
-    # 색상에 따라 적절한 정규 표현식을 사용하여 이동을 분석합니다.
-    if color == "Wp":
-        match_index_move = re.match(r"Wp([PNBRQK]+)([0-7])([0-7])([0-7])([0-7])", index_move)
-    elif color == "Bp":
-        match_index_move = re.match(r"Bp([PNBRQK]+)([0-7])([0-7])([0-7])([0-7])", index_move)
-    else:
-        return "Invalid color"
-
-    # 정규 표현식으로부터 추출한 그룹을 변수에 할당합니다.
-    part1, part2, part3, part4, part5 = match_index_move.groups()
-
-    # 첫 번째 부분에 색상을 추가합니다.
-    part1 = color + part1
-
-    # 나머지 부분들은 정수로 변환합니다.
-    part2, part3, part4, part5 = int(part2), int(part3), int(part4), int(part5)
-
-    # 해당 위치에 말이 존재하면 이동을 수행합니다.
-    if board[part2][part3] == part1:
-        board[part4][part5] = part1  # 목적지에 말을 배치합니다.
-        board[part2][part3] = "-"  # 기존 위치를 비웁니다.
+def board_move(board: list[list], move: list):
+    cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type = move
+    piece_name = color + piece_type
+    if board[cx][cy] == piece_name:
+        board[cx][cy] = piece_name
+        board[cx][cy] = "-"
     else:
         return "No piece"
-
-    # 함수에서는 이동이 성공적으로 수행되었음을 특별히 표시하지 않습니다.
-    # 필요하다면, 이동 성공 메시지나 다른 값을 반환하도록 수정할 수 있습니다.
 
 
 def print_board(board: list):
@@ -104,20 +77,20 @@ def play_move(color: str, possible_moves: list, board: list):
     checkmate = False
     if color == "Wp":
         player_move: str = input("하얀색 말의 움직임을 입력하시오")
-        move: str = check_move_convert(check_moves(possible_moves, player_move, "Wp"))
+        move = check_move_convert(check_moves(possible_moves, player_move, "Wp"))
     elif color == "Bp":
         player_move: str = input("검은색 체스말 움직임을 입력하시오")
-        move: str = check_move_convert(check_moves(possible_moves, player_move, "Bp"))
+        move = check_move_convert(check_moves(possible_moves, player_move, "Bp"))
     else:
         print("Invalid color")
         return "Invalid color"
-    if move in ["No possible move", "Invalid input", "Unknown result", "Duplicated"]:
+    if isinstance(move, str):
         print(move)
         return move
     if color == "Wp":
-        board_move(board, move, "Wp")
+        board_move(board, move)
     elif color == "Bp":
-        board_move(board, move, "Bp")
+        board_move(board, move)
     else:
         print("Invalid color")
         return "Invalid color"
