@@ -7,12 +7,11 @@ import re
 # GPT-4 for wrtn(주석, 최적화 담당 노예)
 
 
-def check_moves(moves: list[list], player_move: str) -> list | str:
+def check_moves(moves: list[list[int, int, int, int, str, str, str, str, str | None]], player_move: str) -> list | str:
     match = re.match(r"([PNBRQKpnbrqk]+)?([a-hA-H])?([1-8])?([Xx])?([a-hA-H])([1-8])(=[NBRQnbrq]+)?", player_move, re.I)
     possible_moves = []
     if match:
         part1, part2, part3, part4, part5, part6, part7 = match.groups()
-        match_part1, match_part2, match_part3, match_part4, match_part5, match_part6, match_part7 = False
         if part1 is None:
             part1 = 'P'
         else:
@@ -36,27 +35,16 @@ def check_moves(moves: list[list], player_move: str) -> list | str:
             if match_part1 and match_part2 and match_part3 and match_part4 and match_part5 and match_part6 and match_part7:
                 possible_moves.append([cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type])
         if possible_moves:
-            return possible_moves
+            if len(possible_moves) > 1:
+                return "Duplicated"
+            return possible_moves[0]
         else:
             return "No possible move"
     else:
         return "Invalid input"
 
 
-def check_move_convert(result: list | str) -> list | str:
-    if isinstance(result, list):
-        if len(result) >= 2:
-            return "Duplicated"
-        elif len(result) == 1:
-            return result[0]
-    elif isinstance(result, str):
-        if result in ["No possible move", "Invalid input", "Invalid color"]:
-            return result
-    else:
-        return "Unknown result"
-
-
-def board_move(board: list[list], move: list):
+def board_move(board: list[list[str]], move: list[int, int, int, int, str, str, str, str, str | None]) -> str | None:
     cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type = move
     piece_name = color + piece_type
     if board[cx][cy] == piece_name:
@@ -66,27 +54,29 @@ def board_move(board: list[list], move: list):
         return "No piece"
 
 
-def print_board(board: list):
+def print_board(board: list[list[str]]):
     # 체스 보드 출력
     for row in board:
         formatted_row: list = [' - ' if i == '-' else i for i in row]
         print(' '.join(map(str, formatted_row)))
 
 
-def play_move(color: str, possible_moves: list, board: list):
+def play_move(color: str, possible_moves: list[list[int, int, int, int, str, str, str, str, str | None]], board: list[list]) -> str:
     checkmate = False
     if color == "Wp":
         player_move: str = input("하얀색 말의 움직임을 입력하시오")
-        move = check_move_convert(check_moves(possible_moves, player_move, "Wp"))
+        move = check_moves(possible_moves, player_move)
     elif color == "Bp":
-        player_move: str = input("검은색 체스말 움직임을 입력하시오")
-        move = check_move_convert(check_moves(possible_moves, player_move, "Bp"))
+        player_move: str = input("검은색 말의 움직임을 입력하시오")
+        move = check_moves(possible_moves, player_move)
     else:
         print("Invalid color")
         return "Invalid color"
     if isinstance(move, str):
         print(move)
         return move
+    move: list
+    board_cache = board
     if color == "Wp":
         board_move(board, move)
     elif color == "Bp":
@@ -94,15 +84,29 @@ def play_move(color: str, possible_moves: list, board: list):
     else:
         print("Invalid color")
         return "Invalid color"
-    # 움직임이 체크를 일으키는 경우, 움직임 문자열 끝에 "+"를 추가합니다.
-    white_moves, black_moves = Piece.search_piece()
-    for moves in white_moves:
-        if moves[8:10] == "BK":
-            move = move + "+"
-    for moves in black_moves:
-        if moves[8:10] == "WK":
-            move = move + "+"
+    cache_move = piece.CalculateMoves(board_cache)
+    white_moves, black_moves = cache_move.search_piece()
 
+    if color == "Wp":
+        king_check = 0
+        for _, _, _, _, _, _, _, _, takes_piece in white_moves:
+            if takes_piece == "K":
+                king_check = 1
+        for _, _, _, _, _, _, _, _, takes_piece in black_moves:
+            if takes_piece == "K":
+                king_check = 2
+        if king_check == 2:
+            return "No possible move"
+    if color == "Bp":
+        king_check = 0
+        for _, _, _, _, _, _, _, _, takes_piece in white_moves:
+            if takes_piece == "K":
+                king_check = 2
+        for _, _, _, _, _, _, _, _, takes_piece in black_moves:
+            if takes_piece == "K":
+                king_check = 1
+        if king_check == 2:
+            return "No possible move"
 
 
     print_board(chess_board)
