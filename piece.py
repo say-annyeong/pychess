@@ -2,7 +2,7 @@ from typing import Callable, Type
 
 
 class Moves:
-    def __init__(self, board: list[list[str]]):
+    def __init__(self, board: list[list[str, str, str, str, str, str, str, str]]):
         self.board = board
         self.piece_types = ["P", "N", "B", "R", "Q", "K"]
 
@@ -39,7 +39,7 @@ class Moves:
 
 
 class Pieces(Moves):
-    def __init__(self, board: list[list[str]]):
+    def __init__(self, board: list[list[str, str, str, str, str, str, str, str]]):
         super().__init__(board)
         self.knight_directions = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (-2, -1), (-2, 1), (2, -1)]
         self.bishop_directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -113,7 +113,7 @@ class CustomPieces(Moves):
 
 
 class CalculateMoves(Pieces, CustomPieces):
-    def __init__(self, board: list[list[str]]):
+    def __init__(self, board: list[list[str, str, str, str, str, str, str, str]]):
         super().__init__(board)
 
     def __call__(self) -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]], list[list[int, int, int, int, str, str, str, str, str | None]]]:
