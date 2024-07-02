@@ -1,39 +1,13 @@
 from typing import Callable, Type
 
 
-# noinspection PyMethodMayBeStatic
-class Convert:
-    def convert_chess_move_to_index(self, move: str) -> str:
-        chess_to_index_map = {
-            'a': '0', 'b': '1', 'c': '2', 'd': '3',
-            'e': '4', 'f': '5', 'g': '6', 'h': '7',
-            '1': '7', '2': '6', '3': '5', '4': '4',
-            '5': '3', '6': '2', '7': '1', '8': '0'
-        }
-
-        piece_info = move[0:3]
-        start_col_index = chess_to_index_map[move[4]]
-        start_row_index = chess_to_index_map[move[3]]
-
-        if 'x' in move:
-            target_col_index = chess_to_index_map[move[7]]
-            target_row_index = chess_to_index_map[move[6]]
-            capture_info = move[8:]
-            return f"{piece_info}{start_col_index}{start_row_index}{target_col_index}{target_row_index}x{capture_info}"
-        else:
-            target_col_index = chess_to_index_map[move[6]]
-            target_row_index = chess_to_index_map[move[5]]
-            move_info = move[7:]
-            return f"{piece_info}{start_col_index}{start_row_index}{target_col_index}{target_row_index}{move_info}"
-
-
 class Moves:
     def __init__(self, board: list[list[str]]):
         self.board = board
         self.piece_types = ["P", "N", "B", "R", "Q", "K"]
 
-    def step(self, x: int, y: int, takes_color: str, color: str, piece_type: str, capture=True, move=True)\
-            -> tuple[list, bool]:
+    def step(self, x: int, y: int, takes_color: str, color: str, piece_type: str, capture=True, move=True) \
+            -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]] | list, bool]:
         if self.board[x][y] == "-":
             if move:
                 return [x, y, "m", piece_type, color, takes_color, None], True
@@ -45,7 +19,8 @@ class Moves:
         return [], False
 
     def walk(self, cx: int, cy: int, dx: int, dy: int, moves: list, takes_color: str, color: str, times: int,
-             piece_type: str, capture=True, move=True) -> list:
+             piece_type: str, capture=True, move=True) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         x, y = cx, cy
         count = 0
         while times == -1 or count < times:
@@ -71,7 +46,8 @@ class Pieces(Moves):
         self.rook_directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         self.QaK_directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
-    def pawn(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def pawn(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         direction = 1 if color == "Bp" else -1
 
@@ -87,31 +63,36 @@ class Pieces(Moves):
 
         return moves
 
-    def knight(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def knight(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         for dx, dy in self.knight_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, 1, "N")
         return moves
 
-    def bishop(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def bishop(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         for dx, dy in self.bishop_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "B")
         return moves
 
-    def rook(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def rook(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         for dx, dy in self.rook_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "R")
         return moves
 
-    def queen(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def queen(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         for dx, dy in self.QaK_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "Q")
         return moves
 
-    def king(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def king(self, x: int, y: int, color: str, takes_color: str) \
+            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         for dx, dy in self.QaK_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, 1, "K")
@@ -119,7 +100,8 @@ class Pieces(Moves):
 
 
 class CustomPieces(Moves):
-    def amazon(self, x: int, y: int, color: str, takes_color: str) -> list[list]:
+    def amazon(self, x: int, y: int, color: str, takes_color: str) -> list[list[
+        int, int, int, int, str, str, str, str, str | None]] | list:
         moves = []
         directions1 = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (-2, -1), (-2, 1), (2, -1)]
         directions2 = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -134,10 +116,11 @@ class CalculateMoves(Pieces, CustomPieces):
     def __init__(self, board: list[list[str]]):
         super().__init__(board)
 
-    def __call__(self) -> tuple[list[list], list[list]]:
+    def __call__(self) -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]], list[list[int, int, int, int, str, str, str, str, str | None]]]:
         return self.search_piece()
 
-    def calculate_move(self, piece: str, row: int, col: int, color: str, takes_color: str) -> list[list]:
+    def calculate_move(self, piece: str, row: int, col: int, color: str, takes_color: str) -> list[list[
+        int, int, int, int, str, str, str, str, str | None]] | list:
         piece_type = piece[2:]
         method_name = {
             "P": "pawn",
@@ -155,7 +138,7 @@ class CalculateMoves(Pieces, CustomPieces):
                 return method(row, col, color, takes_color)
         return []
 
-    def search_piece(self) -> tuple[list[list], list[list]]:
+    def search_piece(self) -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]], list[list[int, int, int, int, str, str, str, str, str | None]]]:
         white_moves, black_moves = [], []
         for row in range(8):
             for col in range(8):
