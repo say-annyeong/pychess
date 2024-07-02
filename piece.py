@@ -3,31 +3,6 @@ from typing import Callable, Type
 
 # noinspection PyMethodMayBeStatic
 class Convert:
-    # def convert_chess_move(self, moves: list) -> list:
-    #     index_to_chess = {'0': '8', '1': '7', '2': '6', '3': '5', '4': '4', '5': '3', '6': '2', '7': '1'}
-    #     columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-    #     converted_moves = []
-    #     for move in moves:
-    #         piece_info = move[0:3]
-    #         current_position = columns[int(move[4])] + index_to_chess[move[3]]
-    #         target_position = columns[int(move[6])] + index_to_chess[move[5]]
-    #         base_action = piece_info + current_position + target_position
-    #         match move[7]:
-    #             case "m":
-    #                 action = base_action
-    #             case "x":
-    #                 action = base_action + "x" + move[-3] + move[-1]
-    #             case "=":
-    #                 action = base_action + "="
-    #             case "x=":
-    #                 action = base_action + "x" + move[-3] + move[-1] + "="
-    #             case "p":
-    #                 action = base_action + "p"
-    #             case _:
-    #                 raise ValueError("처리할 수 없는 이동 종류 입니다.")
-    #         converted_moves.append(action)
-    #     return converted_moves
-
     def convert_chess_move_to_index(self, move: str) -> str:
         chess_to_index_map = {
             'a': '0', 'b': '1', 'c': '2', 'd': '3',
@@ -52,7 +27,7 @@ class Convert:
             return f"{piece_info}{start_col_index}{start_row_index}{target_col_index}{target_row_index}{move_info}"
 
 
-class Moves(Convert):
+class Moves:
     def __init__(self, board: list[list[str]]):
         self.board = board
         self.piece_types = ["P", "N", "B", "R", "Q", "K"]
@@ -86,26 +61,6 @@ class Moves(Convert):
                         break
             count += 1
         return moves
-
-
-class PieceDecorator(Moves):
-    def __init__(self, func, move_type: list, board: list[list[str]], *move_point: list):
-        super().__init__(board)
-        self.func = func
-        self.move_type = move_type
-        self.move_point = move_point
-
-    def __call__(self, x: int, y: int, color: str, takes_color: str):
-        self.x = x
-        self.y = y
-        self.color = color
-        self.takes_color = takes_color
-        moves = []
-        for move_list in self.move_type:
-            method = getattr(self, move_list, None)
-            for point in self.move_point:
-                for dx, dy in point:
-                    moves.extend(method(self.x + dx, self.y + dy, self.takes_color, self.color))
 
 
 class Pieces(Moves):
