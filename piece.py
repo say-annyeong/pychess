@@ -1,4 +1,27 @@
-from typing import Callable, Type
+from typing import Callable
+from enum import Enum, auto
+
+
+class Color(Enum):
+    WHITE = auto()
+    BLACK = auto()
+
+    @property
+    def opposite(self):
+        return Color.BLACK if self == Color.WHITE else Color.WHITE
+
+    def __str__(self):
+        return "Wp" if self == Color.WHITE else "Bp"
+
+
+class PieceType(Enum):
+    PAWN = "P"
+    KNIGHT = "N"
+    BISHOP = "B"
+    ROOK = "R"
+    QUEEN = "Q"
+    KING = "K"
+    AMAZON = "A"
 
 
 class Moves:
@@ -7,7 +30,7 @@ class Moves:
         self.piece_types = ["P", "N", "B", "R", "Q", "K"]
 
     def step(self, x: int, y: int, takes_color: str, color: str, piece_type: str, capture=True, move=True) \
-            -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]] | list, bool]:
+            -> tuple[list[list[int | str | None]] | list, bool]:
         if self.board[x][y] == "-":
             if move:
                 return [x, y, "m", piece_type, color, takes_color, None], True
@@ -20,7 +43,7 @@ class Moves:
 
     def walk(self, cx: int, cy: int, dx: int, dy: int, moves: list, takes_color: str, color: str, times: int,
              piece_type: str, capture=True, move=True) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+            -> list[list[int | str | None]] | list:
         x, y = cx, cy
         count = 0
         while times == -1 or count < times:
@@ -46,8 +69,7 @@ class Pieces(Moves):
         self.rook_directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         self.QaK_directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
-    def pawn(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def pawn(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         direction = 1 if color == "Bp" else -1
 
@@ -63,36 +85,31 @@ class Pieces(Moves):
 
         return moves
 
-    def knight(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def knight(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         for dx, dy in self.knight_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, 1, "N")
         return moves
 
-    def bishop(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def bishop(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         for dx, dy in self.bishop_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "B")
         return moves
 
-    def rook(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def rook(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         for dx, dy in self.rook_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "R")
         return moves
 
-    def queen(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def queen(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         for dx, dy in self.QaK_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, -1, "Q")
         return moves
 
-    def king(self, x: int, y: int, color: str, takes_color: str) \
-            -> list[list[int, int, int, int, str, str, str, str, str | None]] | list:
+    def king(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         for dx, dy in self.QaK_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, 1, "K")
@@ -100,8 +117,7 @@ class Pieces(Moves):
 
 
 class CustomPieces(Moves):
-    def amazon(self, x: int, y: int, color: str, takes_color: str) -> list[list[
-        int, int, int, int, str, str, str, str, str | None]] | list:
+    def amazon(self, x: int, y: int, color: str, takes_color: str) -> list[list[int | str | None]] | list:
         moves = []
         directions1 = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (-2, -1), (-2, 1), (2, -1)]
         directions2 = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -113,14 +129,14 @@ class CustomPieces(Moves):
 
 
 class CalculateMoves(Pieces, CustomPieces):
-    def __init__(self, board: list[list[str, str, str, str, str, str, str, str]]):
+    def __init__(self, board: list[list[str]]):
         super().__init__(board)
 
-    def __call__(self) -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]], list[list[int, int, int, int, str, str, str, str, str | None]]]:
+    def __call__(self) -> tuple[list[list[int | str | None]], list[list[int | str | None]]]:
         return self.search_piece()
 
-    def calculate_move(self, piece: str, row: int, col: int, color: str, takes_color: str) -> list[list[
-        int, int, int, int, str, str, str, str, str | None]] | list:
+    def calculate_move(self, piece: str, row: int, col: int, color: str, takes_color: str)\
+            -> list[list[int | str | None]] | list:
         piece_type = piece[2:]
         method_name = {
             "P": "pawn",
@@ -138,32 +154,23 @@ class CalculateMoves(Pieces, CustomPieces):
                 return method(row, col, color, takes_color)
         return []
 
-    def search_piece(self) -> tuple[list[list[int, int, int, int, str, str, str, str, str | None]], list[list[int, int, int, int, str, str, str, str, str | None]]]:
-        white_moves, black_moves = [], []
-        for row in range(8):
-            for col in range(8):
-                piece = self.board[row][col]
-                if piece.startswith("Wp"):
-                    white_moves.extend(self.calculate_move(piece, row, col, "Wp", "Bp"))
-                elif piece.startswith("Bp"):
-                    black_moves.extend(self.calculate_move(piece, row, col, "Bp", "Wp"))
-                elif piece.startswith("-"):
-                    continue
-                else:
-                    raise ValueError("잘못된 색상")
+    def search_piece(self) -> tuple[list[list[int | str | None]], list[list[int | str | None]]]:
+        white_moves = [
+            move
+            for row in range(8)
+            for col in range(8)
+            if self.board[row][col].startswith("Wp")
+            for move in self.calculate_move(self.board[row][col], row, col, "Wp", "Bp")
+        ]
+
+        black_moves = [
+            move
+            for row in range(8)
+            for col in range(8)
+            if self.board[row][col].startswith("Bp")
+            for move in self.calculate_move(self.board[row][col], row, col, "Bp", "Wp")
+        ]
+
+        if any(not piece.startswith(("Wp", "Bp", "-")) for row in self.board for piece in row):
+            raise ValueError("잘못된 색상")
         return white_moves, black_moves
-
-
-if __name__ == "__main__":
-    chess_board = [
-        ["-", "-", "-", "-", "-", "-", "-", "BpK"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["-", "BpQ", "-", "-", "-", "-", "-", "-"],
-        ["-", "-", "-", "-", "-", "-", "-", "BpR"],
-        ["-", "-", "-", "-", "-", "-", "-", "-"],
-        ["WpK", "-", "-", "-", "-", "-", "-", "-"]
-    ]
-    cal = CalculateMoves(chess_board)
-    print(cal())

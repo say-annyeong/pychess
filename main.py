@@ -5,9 +5,10 @@ import re
 # 셜뭉중(mjseol06)
 # oɥɐꓷ(daho0980)
 # GPT-4 for wrtn(주석, 최적화 담당 노예)
+# Claude 3.5 Sonnet(코딩 고수)
 
 
-def check_moves(moves: list[list[int, int, int, int, str, str, str, str, str | None]], player_move: str) -> list | str:
+def check_moves(moves: list[list[int | str | None]], player_move: str) -> list | str:
     match = re.match(r"([PNBRQKpnbrqk]+)?([a-hA-H])?([1-8])?([Xx])?([a-hA-H])([1-8])(=[NBRQnbrq]+)?", player_move, re.I)
     possible_moves = []
     if match:
@@ -44,7 +45,7 @@ def check_moves(moves: list[list[int, int, int, int, str, str, str, str, str | N
         return "Invalid input"
 
 
-def board_move(board: list[list[str]], move: list[int, int, int, int, str, str, str, str, str | None]) -> str | None:
+def board_move(board: list[list[str]], move: list[int | str | None]) -> str | None:
     cx, cy, dx, dy, move_type, piece_type, color, takes_color, takes_piece_type = move
     piece_name = color + piece_type
     if board[cx][cy] == piece_name:
@@ -54,6 +55,10 @@ def board_move(board: list[list[str]], move: list[int, int, int, int, str, str, 
         return "No piece"
 
 
+def checkmate():
+    pass
+
+
 def print_board(board: list[list[str]]):
     # 체스 보드 출력
     for row in board:
@@ -61,61 +66,40 @@ def print_board(board: list[list[str]]):
         print(' '.join(map(str, formatted_row)))
 
 
-def play_move(color: str, possible_moves: list[list[int, int, int, int, str, str, str, str, str | None]], board: list[list]) -> str:
-    checkmate = False
+def play_move(color: str, possible_moves: list[list[int | str | None]], board: list[list]):
     if color == "Wp":
         player_move: str = input("하얀색 말의 움직임을 입력하시오")
-        move = check_moves(possible_moves, player_move)
     elif color == "Bp":
         player_move: str = input("검은색 말의 움직임을 입력하시오")
-        move = check_moves(possible_moves, player_move)
     else:
         print("Invalid color")
         return "Invalid color"
+    move = check_moves(possible_moves, player_move)
     if isinstance(move, str):
         print(move)
         return move
-    move: list
     board_cache = board
-    if color == "Wp":
-        board_move(board, move)
-    elif color == "Bp":
-        board_move(board, move)
-    else:
-        print("Invalid color")
-        return "Invalid color"
+    board_move(board_cache, move)
     cache_move = piece.CalculateMoves(board_cache)
     white_moves, black_moves = cache_move.search_piece()
-
-    if color == "Wp":
-        king_check = 0
-        for _, _, _, _, _, _, _, _, takes_piece in white_moves:
-            if takes_piece == "K":
-                king_check = 1
-        for _, _, _, _, _, _, _, _, takes_piece in black_moves:
-            if takes_piece == "K":
-                king_check = 2
-        if king_check == 2:
-            return "No possible move"
-    if color == "Bp":
-        king_check = 0
-        for _, _, _, _, _, _, _, _, takes_piece in white_moves:
-            if takes_piece == "K":
-                king_check = 2
-        for _, _, _, _, _, _, _, _, takes_piece in black_moves:
-            if takes_piece == "K":
-                king_check = 1
-        if king_check == 2:
-            return "No possible move"
-
-
-    print_board(chess_board)
+    king_check = 0
+    for _, _, _, _, _, _, _, _, takes_piece in white_moves:
+        if takes_piece == "K":
+            king_check = 1 if color == "Wp" else 2
+    for _, _, _, _, _, _, _, _, takes_piece in black_moves:
+        if takes_piece == "K":
+            king_check = 2 if color == "Wp" else 1
+    if king_check == 2:
+        print("No possible move")
+        return "No possible move"
+    print_board(board_cache)
     game_moves.append(move)
     print(game_moves)
     print(move)
     print(player_move)
-    if checkmate:
-        return "checkmate"
+    if checkmate():
+        return board_cache, "checkmate"
+    return board_cache, king_check
 
 
 def back_check(checking: str):
@@ -150,13 +134,14 @@ while True:
     print(white_possible_move)
     print(black_possible_move)
     if turn == "Wp":
-        check = play_move("Wp", white_possible_move, chess_board)
-        urn = "Bp"
+        check = play_move(turn, white_possible_move, chess_board)
+        turn = "Bp"
     elif turn == "Bp":
-        check = play_move("Bp", black_possible_move, chess_board)
+        check = play_move(turn, black_possible_move, chess_board)
         turn = "Wp"
     else:
         raise ValueError("Wp와 Bp가 아닙니다.")
+
     match back_check(check):
         case "continue":
             continue
