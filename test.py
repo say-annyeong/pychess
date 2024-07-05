@@ -43,8 +43,21 @@ class Moves:
     def walk(self, cx: int, cy: int, dx: int, dy: int, moves: list, takes_color: Color, color: Color, times: int,
              piece_type: PieceType, capture=True, move=True) \
             -> list[list[int | str | PieceType | Color | None]] | list:
-        pass
-        # ... (기존 코드와 동일, 타입 힌팅만 변경)
+        x, y = cx, cy
+        count = 0
+        while times == -1 or count < times:
+            x += dx
+            y += dy
+            if not (0 <= x <= 7 and 0 <= y <= 7):
+                break
+            if cx != x or cy != y:
+                move, continue_walking = self.step(x, y, takes_color, color, piece_type, capture, move)
+                if move:
+                    moves.append([cx, cy] + move)
+                    if not continue_walking:
+                        break
+            count += 1
+        return moves
 
 
 class Pieces(Moves):
@@ -65,18 +78,55 @@ class Pieces(Moves):
 
         return moves
 
-    def knight(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+    def knight(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | PieceType | Color | None]] | list:
         moves = []
         for dx, dy in self.knight_directions:
             self.walk(x, y, dx, dy, moves, takes_color, color, 1, PieceType.KNIGHT)
         return moves
 
-    # 다른 말들의 메서드도 비슷하게 수정
+    def bishop(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+        moves = []
+        for dx, dy in self.bishop_directions:
+            self.walk(x, y, dx, dy, moves, takes_color, color, -1, PieceType.BISHOP)
+        return moves
+
+    def rook(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+        moves = []
+        for dx, dy in self.rook_directions:
+            self.walk(x, y, dx, dy, moves, takes_color, color, -1, PieceType.ROOK)
+        return moves
+
+    def queen(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+        moves = []
+        for dx, dy in self.QaK_directions:
+            self.walk(x, y, dx, dy, moves, takes_color, color, -1, PieceType.QUEEN)
+        return moves
+
+    def king(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+        moves = []
+        for dx, dy in self.QaK_directions:
+            self.walk(x, y, dx, dy, moves, takes_color, color, 1, PieceType.KING)
+        return moves
+
+
+class CustomPieces(Moves):
+    def amazon(self, x: int, y: int, color: Color, takes_color: Color) -> list[list[int | str | None]] | list:
+        moves = []
+        directions1 = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (-2, -1), (-2, 1), (2, -1)]
+        directions2 = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+        for dx, dy in directions1:
+            self.walk(x, y, dx, dy, moves, takes_color, color, 1, PieceType.AMAZON)
+        for dx, dy in directions2:
+            self.walk(x, y, dx, dy, moves, takes_color, color, -1, PieceType.AMAZON)
+        return moves
 
 
 class CalculateMoves(Pieces):
     def __init__(self, board: list[list[str]]):
         super().__init__(board)
+
+    def __call__(self) -> tuple[list[list[int | str | None]], list[list[int | str | None]]]:
+        return self.search_piece()
 
     def calculate_move(self, piece: str, row: int, col: int, color: Color, takes_color: Color)\
             -> list[list[int | str | PieceType | Color | None]] | list:
@@ -107,3 +157,18 @@ class CalculateMoves(Pieces):
         if any(not piece.startswith((str(Color.WHITE), str(Color.BLACK), "-")) for row in self.board for piece in row):
             raise ValueError("잘못된 색상")
         return white_moves, black_moves
+
+
+if __name__ == "__main__":
+    chess_board = [
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["WpK", "-", "-", "-", "-", "-", "-", "-"]
+    ]
+    cal = CalculateMoves(chess_board)
+    print(cal())

@@ -174,3 +174,18 @@ class CalculateMoves(Pieces, CustomPieces):
         if any(not piece.startswith(("Wp", "Bp", "-")) for row in self.board for piece in row):
             raise ValueError("잘못된 색상")
         return white_moves, black_moves
+
+
+if __name__ == "__main__":
+    chess_board = [
+        ["-", "-", "-", "-", "-", "-", "-", "BpK"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["-", "-", "-", "-", "-", "-", "-", "-"],
+        ["WpK", "-", "-", "-", "-", "-", "-", "-"]
+    ]
+    cal = CalculateMoves(chess_board)
+    print(cal())
